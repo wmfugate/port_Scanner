@@ -35,6 +35,7 @@ def checksum(msg):
 def conn(minport, maxport, timeout, protocol, returnType, resultStore, retries, target):
     if(protocol == 1):  #TCP
         for i in range(minport, maxport+1): #+1 as exclusive of end value
+            #sockets must be recreated each loop as can only do one connection per socket (can be outside for UDP as connectionless)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   #1st parameter = IPv4, 2nd = TCP
             s.settimeout(timeout)
             try:
@@ -64,12 +65,11 @@ def conn(minport, maxport, timeout, protocol, returnType, resultStore, retries, 
         #different: hard to distinguish between open and filtered as port may not send anything back if open (no handshack, ACK, etc.)
         #why reordered down below?
         #nmap throws in -sv which sends some custom packets to elicit better responses
-        #nmap also uses TTL values on packets to try and get better results - not possibly with socket's recvfrom with UDP as only returns payload and source address
-
+        #nmap also uses TTL values on packets to try and get better results - not possible with socket's recvfrom with UDP as only returns payload and source address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)   #1st parameter = IPv4, 2nd = UDP
+        s.settimeout(timeout)
         for i in range(minport, maxport+1): #+1 as exclusive of end value
             for tries in range(retries):
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)   #1st parameter = IPv4, 2nd = TCP
-                s.settimeout(timeout)
                 try:
                     #send specific packets for some ports to try and get better response (special packets are AI generated)
                     #for others, just empty packet
@@ -134,7 +134,7 @@ def conn(minport, maxport, timeout, protocol, returnType, resultStore, retries, 
                     if((returnType == 1) or (returnType == 3)):
                         resultStore.append((i, "unknown"))
                     break
-                s.close()
+        s.close()
     else:
         #TCP SYN scan, must use raw sockets (must make packet ourselves), run with sudo
         #getting accurate my_ip (socket.gethostname was returning local 127.#.#.# address)
