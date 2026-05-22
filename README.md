@@ -33,7 +33,7 @@ Built-in modules for Go:
 ### Python scanner
 
 ```bash
-python3 portScan.py
+sudo python3 portScan.py
 ```
 
 ### Go scanner
@@ -54,6 +54,11 @@ For example, if there is no response from the port:
   	- the port may have been closed and not sent a response.
 
 Nmap suggested using service/version detection (-sV) and TTL analysis to better the accuracy of UDP results. The specific packets based on port number are meant to partially replicate -sV. TTL was not implemented in the Python scanner as the socket approach did not return TTL values.
+
+### Normal TCP scan vs. SYN scan
+TCP forms connections through a three-way handshake process. A normal TCP scan goes through the full handshake when scanning ports. A SYN scan, on the other hand, only goes through the first part (SYN and SYN/ACK) before cutting off the connection (with RST). A SYN scan tends to be stealthier as it makes less noise and is less likely to get logged by detection systems. However, this is less true against modern systems as they are now designed to detect SYN scanning.
+
+This has only been implemented on the Python scanner and uses raw sockets to craft the SYN packets manually. The SYN scan may take longer than the regular TCP scan because creating and handling raw packets introduces additional overhead compared to the operating system's built-in and optimized socket handling. In addition, because the SYN scan uses raw sockets and manually crafted packets, it typically requires elevated privileges (such as running with sudo/root permissions) on most operating systems.
 
 ### Python vs. Go
 The Python version of the scanner was coded first, then the Go version was coded based on it. There are some differences as there are things that are in Python that are not in Go, such as:
@@ -78,14 +83,22 @@ The Go version tended to be faster than the Python version though both were pote
 	- https://nmap.org/book/scan-methods-udp-scan.html
 ### Python scanner
 
-- For more on sockets, TCP, UDP:
+- sockets, TCP, UDP:
 	- https://www.geeksforgeeks.org/python/socket-programming-python/
     - https://www.w3tutorials.net/blog/python-socket-connection-timeout/
     - https://docs.python.org/3/library/socket.html#socket.socket.connect
     - https://pythontic.com/modules/socket/sendto
 
-- For threading in Python:
+- threading in Python:
 	- https://www.geeksforgeeks.org/python/multithreading-python-set-1/
+
+- raw sockets, SYN scan basics:
+	- https://nmap.org/book/synscan.html
+	- https://www.cyberly.org/en/what-is-a-syn-scan-and-how-does-it-work/index.html
+	- https://github.com/LordEvron/PythonRawSocketSniffers/tree/master
+    - https://www.binarytides.com/raw-socket-programming-in-python-linux/
+    - https://pyquesthub.com/exploring-raw-sockets-in-python-a-practical-example
+    - https://jumpcloud.com/it-index/what-is-an-ephemeral-port
 ### Go scanner
 
 - general:
